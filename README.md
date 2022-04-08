@@ -1,15 +1,15 @@
-## Alchemix Extender
+# Alchemix Extender
 
 Contracts & Front end for the app.
 
-What the app does:
+### What the app does:
 
 1. Deposits DAI in Alchemix V2
 2. Mints alUSD from Alchemix V2
 3. Swaps alUSD for DAI in Curve
 4. Transfers DAI to a selected beneficiary.
 
-##### How to use
+### How to use it
 
 Alchemix V2 only allows whitelisted contracts (regular EOAs are obviously allowed) to interact with their contract. So, for now we must use this app with a local mainnet fork and whitelist ourselves in the Alchemix Whitelist contract.
 
