@@ -1,4 +1,8 @@
 // scripts/index.js
+equire('dotenv').config()
+
+const { METAMASK_ADDRESS } = process.env;
+
 async function main() {
     // Set up an ethers contract, representing our deployed Box instance
     const address = "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27";
@@ -17,10 +21,6 @@ async function main() {
     });
 
     const daiHolder = await ethers.getSigner(daiHolderAddress);
-
-    // Metamask Address
-
-    const metamaskAddress = "0x5d860534FDC6015Fb796C4057F0EcfEDb9a4B19d"
 
     // DAI Contract
 
@@ -56,15 +56,15 @@ async function main() {
 
   console.log("2. Contract Whitelisted:", whitelistedAddress);
 
-  console.log("3. Sending ETH to Metamask account:", metamaskAddress);
+  console.log("3. Sending ETH to Metamask account:", METAMASK_ADDRESS);
 
-  await daiHolder.sendTransaction({to: metamaskAddress, value: ethers.utils.parseEther("10")})
+  await daiHolder.sendTransaction({to: METAMASK_ADDRESS, value: ethers.utils.parseEther("10")})
 
-  console.log("5. Sending DAI to Metamask account:", metamaskAddress);
+  console.log("5. Sending DAI to Metamask account:", METAMASK_ADDRESS);
 
-  await daiContract.connect(daiHolder).transfer(metamaskAddress, ethers.utils.parseEther("10000"));
+  await daiContract.connect(daiHolder).transfer(METAMASK_ADDRESS, ethers.utils.parseEther("10000"));
 
-  const DAIBalance = await daiContract.balanceOf(metamaskAddress);
+  const DAIBalance = await daiContract.balanceOf(METAMASK_ADDRESS);
 
   console.log("6. Metamask account DAI Balance:", DAIBalance.toString());
 }
