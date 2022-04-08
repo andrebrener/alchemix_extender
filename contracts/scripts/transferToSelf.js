@@ -1,9 +1,12 @@
-// scripts/index.js
+require('dotenv').config()
+
+const { DEPLOYED_CONTRACT_ADDRESS } = process.env;
+
 async function main() {
     // Set up an ethers contract, representing our deployed Box instance
     const address = "0xB377a2EeD7566Ac9fCb0BA673604F9BF875e2Bab";
     const Extender = await ethers.getContractFactory("Extender");
-    const extender = await Extender.attach(address);
+    const extender = await Extender.attach(DEPLOYED_CONTRACT_ADDRESS);
 
     // Signers
 
@@ -33,7 +36,7 @@ async function main() {
 
     try {
       await extender.connect(daiHolder)._transferTokensToSelf("0x6B175474E89094C44Da98b954EedeAC495271d0F", 50000);
-      const balance = await daiContract.balanceOf(address);
+      const balance = await daiContract.balanceOf(DEPLOYED_CONTRACT_ADDRESS);
       console.log("Contract balance:", balance.toString())
     } catch (error) {
       console.log(error)

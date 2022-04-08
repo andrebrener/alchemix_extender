@@ -1,8 +1,8 @@
-// scripts/index.js
-async function main() {
-    // Set up an ethers contract, representing our deployed Box instance
-    const address = "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27";
+equire('dotenv').config()
 
+const { DEPLOYED_CONTRACT_ADDRESS } = process.env;
+
+async function main() {
     // Signers
 
     // Regular
@@ -54,7 +54,7 @@ async function main() {
   
   console.log("3. Whitelisting contract with alchemist admin address:", alchemistWhitelistAdmin.address);
 
-  await alchemistWhitelistContract.connect(alchemistWhitelistAdmin).add(address);
+  await alchemistWhitelistContract.connect(alchemistWhitelistAdmin).add(DEPLOYED_CONTRACT_ADDRESS);
 
   const whitelistedAddress = await alchemistWhitelistContract.isWhitelisted(address);
 
@@ -67,7 +67,7 @@ async function main() {
   ];
   const alchemistBaseContract = new ethers.Contract('0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd', alchemistBaseABI, daiHolder);
   
-  console.log(`5. Approving contract minting from owner: ${daiHolder.address} to spender: ${address}`);
+  console.log(`5. Approving contract minting from owner: ${daiHolder.address} to spender: ${DEPLOYED_CONTRACT_ADDRESS}`);
 
   await alchemistBaseContract.connect(daiHolder).approveMint(address, 1000000000000000);
 

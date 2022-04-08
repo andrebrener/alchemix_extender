@@ -1,9 +1,11 @@
-// scripts/index.js
+require('dotenv').config()
+
+const { DEPLOYED_CONTRACT_ADDRESS } = process.env;
+
 async function main() {
     // Set up an ethers contract, representing our deployed Box instance
-    const address = "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27";
     const Extender = await ethers.getContractFactory("Extender");
-    const extender = await Extender.attach(address);
+    const extender = await Extender.attach(DEPLOYED_CONTRACT_ADDRESS);
 
     // Signers
 

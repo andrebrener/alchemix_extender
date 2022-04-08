@@ -1,11 +1,11 @@
 // scripts/index.js
 equire('dotenv').config()
 
-const { METAMASK_ADDRESS } = process.env;
+const { METAMASK_ADDRESS, DEPLOYED_CONTRACT_ADDRESS } = process.env;
 
 async function main() {
     // Set up an ethers contract, representing our deployed Box instance
-    const address = "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27";
+    const DEPLOYED_CONTRACT_ADDRESS = "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27";
 
     // Signers
 
@@ -50,7 +50,7 @@ async function main() {
   
   console.log("1. Whitelisting contract with alchemist admin address:", alchemistWhitelistAdmin.address);
 
-  await alchemistWhitelistContract.connect(alchemistWhitelistAdmin).add(address);
+  await alchemistWhitelistContract.connect(alchemistWhitelistAdmin).add(DEPLOYED_CONTRACT_ADDRESS);
 
   const whitelistedAddress = await alchemistWhitelistContract.isWhitelisted(address);
 
