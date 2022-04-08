@@ -38,7 +38,8 @@ export default function Home() {
          {/* Address info */}
          {address && (
            <div>
-               <p>Deposited Tokens: {alchemixAccount?.depositedTokens}</p>
+               <p>Underlying Tokens Deposit: {alchemixAccount?.underlyingTokensDeposited}</p>
+               <p>Deposited Yield Tokens: {alchemixAccount?.yieldTokensDeposited}</p>
                <p>Current Debt: {alchemixAccount?.debt}</p>
         </div>
         )

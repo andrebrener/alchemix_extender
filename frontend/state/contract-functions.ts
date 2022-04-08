@@ -30,6 +30,7 @@ function useToken() {
       [
         // Execute Operation
         "function executeOperation(uint256 collateralValue, uint256 targetDebt, address finalRecipient, uint128 maxSlippage) external payable returns (bool)",
+        "function yieldTokenAddress() public view returns (address) "
       ],
       // Get signer from authed provider
       provider?.getSigner()
@@ -71,7 +72,11 @@ function useToken() {
             // Get Account info
             "function accounts(address owner) external view returns (int256 debt, address[] memory depositedTokens)",
             // Approve contract to Mint
-            "function approveMint(address spender, uint256 amount) external"
+            "function approveMint(address spender, uint256 amount) external",
+            // Yield Token Params
+            "function getYieldTokenParameters(address yieldToken) external view returns (uint8 decimals, address underlyingToken, address adapter, uint256 maximumLoss, uint256 balance, uint256 totalShares, uint256 expectedValue, uint256 accruedWeight, bool enabled)",
+            // Underlying Tokens per Share
+            "function getUnderlyingTokensPerShare(address yieldToken) external view returns (uint256)"
           ],
           // Get signer from authed provider
           provider?.getSigner()
@@ -89,9 +94,26 @@ function useToken() {
     // Address Balance
     const accountInfo = await alchemist.accounts(account);
 
-    const depositedTokens = accountInfo.depositedTokens.toString().length > 0 ? accountInfo.depositedTokens.toString(): "0"
+    // Contract
+    const contract: ethers.Contract = getContract();
 
-    const returnValue = {"debt": accountInfo.debt.toString(), "depositedTokens": depositedTokens};
+    const yieldTokenAddress = await contract.yieldTokenAddress();
+
+    // const yieldTokenParams = await alchemist.getYieldTokenParameters(yieldTokenAddress);
+    // console.log(yieldTokenParams)
+    // const yieldTokensDeposited = yieldTokenParams[8].toString();
+
+    const positions = await alchemist.positions(account, yieldTokenAddress)
+    const yieldTokensDeposited = positions.shares.toString()
+    
+    const underlyingTokensPerShare = await alchemist.getUnderlyingTokensPerShare(yieldTokenAddress);
+
+    const adjustedYieldTokensDeposited = ethers.utils.formatEther(yieldTokensDeposited);
+    const adjustedDebt = ethers.utils.formatEther(accountInfo.debt.toString());
+    const adjustedTokensPerShare = ethers.utils.formatEther(underlyingTokensPerShare.toString());
+
+    const returnValue = {"debt": adjustedDebt, "yieldTokensDeposited": Number(adjustedYieldTokensDeposited).toFixed(1),
+  "underlyingTokensDeposited": Number(adjustedYieldTokensDeposited) * Number(adjustedTokensPerShare)};
     return returnValue;
   };
 
@@ -129,7 +151,8 @@ function useToken() {
 
     // Try to set new message and refresh sync status
     try {
-      const tx = await daiContract.approve(formattedAddress, 10000000000000);
+      const tx = await daiContract.approve(formattedAddress, ethers.utils.parseEther("10000000"));
+
       await tx.wait(1);
       await syncStatus();
     } catch (e) {
@@ -152,7 +175,7 @@ function useToken() {
 
     // Try to set new message and refresh sync status
     try {
-      const tx = await alchemistContract.approveMint(formattedAddress, 10000000000000);
+      const tx = await alchemistContract.approveMint(formattedAddress, ethers.utils.parseEther("10000000"));
       await tx.wait(1);
       await syncStatus();
     } catch (e) {
@@ -171,9 +194,13 @@ function useToken() {
     // Get properly formatted address
     const formattedBeneficiaryAddress: string = ethers.utils.getAddress(beneficiary);
 
+    const adjustedCollateralValue = ethers.utils.parseEther(collateralValue.toString());
+
+    const adjustedTargetDebt = ethers.utils.parseEther(targetDebt.toString());
+
     // Try to execute tx refresh sync status
     try {
-      const tx = await contract.executeOperation(collateralValue, targetDebt, formattedBeneficiaryAddress, maxSlippage);
+      const tx = await contract.executeOperation(adjustedCollateralValue, adjustedTargetDebt, formattedBeneficiaryAddress, maxSlippage);
       await tx.wait(1);
       await syncStatus();
     } catch (e) {

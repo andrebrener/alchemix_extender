@@ -30,8 +30,8 @@ export default function ExecuteOperation() {
   const [approveMintButtonLoading, setapproveMintButtonLoading] = useState<boolean>(false);
   // Local buttons disabled
   const [approveButtonDisabled, setApproveButtonDisabled] = useState<boolean>(false);
-  const [approveMintButtonDisabled, setapproveMintButtonDisabled] = useState<boolean>(true);
-  const [executeButtonDisabled, setExecuteButtonDisabled] = useState<boolean>(true);
+  const [approveMintButtonDisabled, setApproveMintButtonDisabled] = useState<boolean>(true);
+  // const [executeButtonDisabled, setExecuteButtonDisabled] = useState<boolean>(true);
   
   // Inputs
   const [beneficiary, setBeneficiary] = useState("");
@@ -71,7 +71,7 @@ export default function ExecuteOperation() {
     await DAIApproveContract(); // Approve Contract
     setApproveButtonLoading(false); // Toggle
     setApproveButtonDisabled(true);
-    setapproveMintButtonDisabled(false);
+    setApproveMintButtonDisabled(false);
     };
 
       /**
@@ -80,8 +80,9 @@ export default function ExecuteOperation() {
   const approveContractMintingWithLoading = async () => {
     setapproveMintButtonLoading(true); // Toggle
     await AlchemistApproveMint(); // Approve Contract
-    setApproveButtonLoading(false); // Toggle
-    setExecuteButtonDisabled(false); // Toggle
+    setapproveMintButtonLoading(false); // Toggle
+    setApproveMintButtonDisabled(true);
+    // setExecuteButtonDisabled(false); // Toggle
     };
 
     /**
@@ -90,7 +91,7 @@ export default function ExecuteOperation() {
      const executeOperationWithLoading = async () => {
       setExecuteButtonLoading(true); // Toggle
       await executeOperation(collateralValue, targetDebt, beneficiary, maxSlippage); // Execute Operation
-      setExecuteButtonLoading(false); // Toggle
+      // setExecuteButtonLoading(false); // Toggle
     };
 
   return (
@@ -165,7 +166,7 @@ export default function ExecuteOperation() {
             <button onClick={approveContractMintingWithLoading} disabled={approveMintButtonDisabled}>
               {approveMintButtonLoading ? "Approving..." : "Approve Contract to mint from Alchemix"}
             </button>
-            <button onClick={executeOperationWithLoading} disabled={executeButtonDisabled}>
+            <button onClick={executeOperationWithLoading} disabled={false}>
               {executeButtonLoading ? "Executing Transaction..." : "Invest"}
             </button>
           </div>

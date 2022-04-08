@@ -1,7 +1,7 @@
 // scripts/index.js
 async function main() {
     // Set up an ethers contract, representing our deployed Box instance
-    const address = "0x66F625B8c4c635af8b74ECe2d7eD0D58b4af3C3d";
+    const address = "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27";
 
     // Signers
 
@@ -40,7 +40,7 @@ async function main() {
     console.log("Dai Holder balance:", balance.toString())
 
     console.log("1. Approving contract to spend DAI with address:", daiHolder.address);
-    await daiContract.connect(daiHolder).approve(address, 10000000000000000);
+    await daiContract.connect(daiHolder).approve(address, 100000000000000);
 
     console.log("2. Contact approved to spend DAI");
 

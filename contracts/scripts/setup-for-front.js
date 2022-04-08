@@ -1,7 +1,7 @@
 // scripts/index.js
 async function main() {
     // Set up an ethers contract, representing our deployed Box instance
-    const address = "0x66F625B8c4c635af8b74ECe2d7eD0D58b4af3C3d";
+    const address = "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27";
 
     // Signers
 
@@ -20,7 +20,7 @@ async function main() {
 
     // Metamask Address
 
-    const metamaskAddress = "0x25BFb052c9e8eFE56753913bBAbB039A832202F8"
+    const metamaskAddress = "0x5d860534FDC6015Fb796C4057F0EcfEDb9a4B19d"
 
     // DAI Contract
 
@@ -58,7 +58,7 @@ async function main() {
 
   console.log("3. Sending ETH to Metamask account:", metamaskAddress);
 
-  await daiHolder.sendTransaction({to: metamaskAddress, value: ethers.utils.parseEther("1")})
+  await daiHolder.sendTransaction({to: metamaskAddress, value: ethers.utils.parseEther("10")})
 
   console.log("5. Sending DAI to Metamask account:", metamaskAddress);
 
