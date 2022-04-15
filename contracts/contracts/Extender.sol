@@ -55,7 +55,7 @@ contract Extender is Ownable {
     /// @notice Executes whole operation
     /// @param collateralValue The value of the collateral to deposit on Alchemix
     /// @param targetDebt The amount of debt that the user will incur
-    /// @param targetDebt Address that will receive the final borrowed amount
+    /// @param finalRecipient Address that will receive the final borrowed amount
     /// @param maxSlippage Maximum slippage for curve swap
     /// @return success Always true unless reverts
     function executeOperation(
@@ -236,54 +236,5 @@ contract Extender is Ownable {
         uint256 balance = IERC20(debtToken).balanceOf(address(this));
 
         return balance;
-    }
-
-    function executeAlchemixOperation(
-        uint256 collateralValue,
-        uint256 targetDebt
-    ) external payable returns (bool) {
-        address underlyingToken = getUnderlyingToken();
-        address recipient = msg.sender;
-
-        // Gate on EOA or whitelisted
-        if (!(tx.origin == recipient || whitelist.isWhitelisted(msg.sender)))
-            revert Unauthorized(msg.sender);
-
-        // Check if user has that balance
-        require(
-            IERC20(underlyingToken).balanceOf(recipient) >= collateralValue,
-            "Not enough balance"
-        );
-
-        // Check targetDebt < 0.5 * collateralValue
-        require(
-            targetDebt <= collateralValue / 2,
-            "Debt greater than collateral value / 2"
-        );
-
-        _transferTokensToSelf(underlyingToken, collateralValue);
-
-        // Deposit into recipient's account
-        approve(underlyingToken, ALCHEMIST_ADDRESS);
-
-        IAlchemistV2(ALCHEMIST_ADDRESS).depositUnderlying(
-            yieldTokenAddress,
-            collateralValue,
-            recipient,
-            0
-        );
-
-        // Mint from recipient's account
-        try
-            IAlchemistV2(ALCHEMIST_ADDRESS).mintFrom(
-                recipient,
-                targetDebt,
-                address(this)
-            )
-        {} catch {
-            revert MintFailure();
-        }
-
-        return true;
     }
 }
