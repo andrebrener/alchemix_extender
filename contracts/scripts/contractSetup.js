@@ -69,9 +69,9 @@ async function main() {
   
   console.log(`5. Approving contract minting from owner: ${daiHolder.address} to spender: ${DEPLOYED_CONTRACT_ADDRESS}`);
 
-  await alchemistBaseContract.connect(daiHolder).approveMint(address, 1000000000000000);
+  await alchemistBaseContract.connect(daiHolder).approveMint(DEPLOYED_CONTRACT_ADDRESS, 1000000000000000);
 
-  const mintAmountAllowance = await alchemistBaseContract.mintAllowance(daiHolder.address, address);
+  const mintAmountAllowance = await alchemistBaseContract.mintAllowance(daiHolder.address, DEPLOYED_CONTRACT_ADDRESS);
 
   console.log("6. Mint allowance:", mintAmountAllowance.toString());
 }
