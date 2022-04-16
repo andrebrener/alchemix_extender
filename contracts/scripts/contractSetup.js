@@ -40,7 +40,7 @@ async function main() {
     console.log("Dai Holder balance:", balance.toString())
 
     console.log("1. Approving contract to spend DAI with address:", daiHolder.address);
-    await daiContract.connect(daiHolder).approve(address, 100000000000000);
+    await daiContract.connect(daiHolder).approve(DEPLOYED_CONTRACT_ADDRESS, 100000000000000);
 
     console.log("2. Contact approved to spend DAI");
 
@@ -56,7 +56,7 @@ async function main() {
 
   await alchemistWhitelistContract.connect(alchemistWhitelistAdmin).add(DEPLOYED_CONTRACT_ADDRESS);
 
-  const whitelistedAddress = await alchemistWhitelistContract.isWhitelisted(address);
+  const whitelistedAddress = await alchemistWhitelistContract.isWhitelisted(DEPLOYED_CONTRACT_ADDRESS);
 
   console.log("4. Contract Whitelisted:", whitelistedAddress);
 
