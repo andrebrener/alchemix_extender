@@ -20,3 +20,7 @@ Alchemix V2 only allows whitelisted contracts (regular EOAs are obviously allowe
 5. Run [scripts/setup-for-front](https://github.com/andrebrener/alchemix_extender/blob/master/contracts/scripts/setup-for-front.js) in localhost to set
 6. Run the frontend with `npm run dev`
 7. Use the app & Enjoy :)
+
+
+
+This is unadited code and for experimental purposes. Use it at your own risk. 
