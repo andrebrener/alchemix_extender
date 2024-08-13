@@ -1,6 +1,6 @@
 # Alchemix Extender
 
-Contracts & Front end for the app.
+Contracts & Front end for the app
 
 ### What the app does:
 
