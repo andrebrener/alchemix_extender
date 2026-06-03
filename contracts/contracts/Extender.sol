@@ -1,18 +1,32 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.11;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.11;
 
 import "../interfaces/IWhitelist.sol";
-import "../interfaces/IERC20.sol";
 import "../interfaces/IAlchemistV2.sol";
 import "../interfaces/ICurveMetapool.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Extender is Ownable {
-    IWhitelist constant whitelist =
+/// @title Extender
+/// @notice Deposits collateral into Alchemix V2, mints debt against the
+///         depositor's account, swaps the debt token for the underlying via
+///         Curve and forwards the proceeds to a recipient.
+/// @dev UNAUDITED, experimental code. Use at your own risk.
+contract Extender is Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
+    /// @notice Denominator used for the basis-points slippage parameter.
+    uint256 public constant BPS_DENOMINATOR = 10_000;
+
+    IWhitelist public constant whitelist =
         IWhitelist(0x78537a6CeBa16f412E123a90472C6E0e9A8F1132);
 
-    address ALCHEMIST_ADDRESS = 0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd;
+    /// @notice Alchemist V2 used for deposits and minting.
+    address public constant ALCHEMIST_ADDRESS =
+        0x5C6374a2ac4EBC38DeA0Fc1F8716e5Ea1AdD94dd;
 
     address public yieldTokenAddress =
         0xdA816459F1AB5631232FE5e97a05BBBb94970c95;
@@ -36,9 +50,15 @@ contract Extender is Ownable {
     /// @notice When the collateral is insufficient to mint targetDebt
     error MintFailure();
 
-    /// @notice Approve a contract to spend tokens
-    function approve(address token, address spender) internal {
-        IERC20(token).approve(spender, type(uint256).max);
+    /// @notice Approve a contract to spend an exact amount of tokens.
+    /// @dev Resets the allowance to 0 first to support tokens that require it.
+    function _approve(
+        address token,
+        address spender,
+        uint256 amount
+    ) internal {
+        IERC20(token).safeApprove(spender, 0);
+        IERC20(token).safeApprove(spender, amount);
     }
 
     function getUnderlyingToken() public view returns (address) {
@@ -56,19 +76,25 @@ contract Extender is Ownable {
     /// @param collateralValue The value of the collateral to deposit on Alchemix
     /// @param targetDebt The amount of debt that the user will incur
     /// @param finalRecipient Address that will receive the final borrowed amount
-    /// @param maxSlippage Maximum slippage for curve swap
+    /// @param maxSlippage Maximum slippage tolerated on the curve swap, expressed
+    ///        in basis points (e.g. 100 = 1%, 10000 = 100%).
     /// @return success Always true unless reverts
     function executeOperation(
         uint256 collateralValue,
         uint256 targetDebt,
         address finalRecipient,
         uint128 maxSlippage
-    ) external payable returns (bool) {
+    ) external payable nonReentrant returns (bool) {
+        // Slippage must be within [0, 100%] expressed in basis points.
+        if (maxSlippage > BPS_DENOMINATOR)
+            revert IllegalArgument("maxSlippage > 10000 bps");
+
         address underlyingToken = getUnderlyingToken();
         address recipient = msg.sender;
 
-        // Gate on EOA or whitelisted
-        if (!(tx.origin == recipient || whitelist.isWhitelisted(msg.sender)))
+        // Gate on whitelisted callers. EOAs interacting directly are allowed
+        // by Alchemix, contracts must be whitelisted.
+        if (!(msg.sender == tx.origin || whitelist.isWhitelisted(msg.sender)))
             revert Unauthorized(msg.sender);
 
         // Check if user has that balance
@@ -86,7 +112,7 @@ contract Extender is Ownable {
         _transferTokensToSelf(underlyingToken, collateralValue);
 
         // Deposit into recipient's account
-        approve(underlyingToken, ALCHEMIST_ADDRESS);
+        _approve(underlyingToken, ALCHEMIST_ADDRESS, collateralValue);
 
         IAlchemistV2(ALCHEMIST_ADDRESS).depositUnderlying(
             yieldTokenAddress,
@@ -108,7 +134,12 @@ contract Extender is Ownable {
 
         address debtToken = IAlchemistV2(ALCHEMIST_ADDRESS).debtToken();
 
-        uint256 minAmountOut = (targetDebt * (100 - maxSlippage)) / 100;
+        // NOTE: this assumes a ~1:1 price between the debt token and the
+        // underlying token (true for the alAsset/underlying Curve pools this
+        // contract targets). A robust deployment should source a real quote
+        // from an oracle or the pool's `get_dy` view instead of `targetDebt`.
+        uint256 minAmountOut = (targetDebt *
+            (BPS_DENOMINATOR - maxSlippage)) / BPS_DENOMINATOR;
 
         uint256 amountOut = _curveSwap(
             curvePool,
@@ -124,7 +155,7 @@ contract Extender is Ownable {
         return true;
     }
 
-    /// @notice Either convert received eth to weth, or transfer ERC20 from the msg.sender to this contract
+    /// @notice Transfer ERC20 collateral from the msg.sender to this contract.
     /// @param underlyingToken The ERC20 desired to transfer
     /// @param collateralInitial The amount of tokens taken from the user
 
@@ -133,14 +164,14 @@ contract Extender is Ownable {
         uint256 collateralInitial
     ) internal {
         if (msg.value > 0) revert IllegalArgument("msg.value should be 0");
-        IERC20(underlyingToken).transferFrom(
+        IERC20(underlyingToken).safeTransferFrom(
             msg.sender,
             address(this),
             collateralInitial
         );
     }
 
-    /// @notice Either convert received eth to weth, or transfer ERC20 from the msg.sender to this contract
+    /// @notice Transfer this contract's own tokens to the final recipient.
     /// @param underlyingToken The ERC20 desired to transfer
     /// @param swapAmount The amount of tokens after swap
     /// @param recipient Address that will receive the final tokens
@@ -151,11 +182,8 @@ contract Extender is Ownable {
         address recipient
     ) internal {
         if (msg.value > 0) revert IllegalArgument("msg.value should be 0");
-        IERC20(underlyingToken).transferFrom(
-            address(this),
-            recipient,
-            swapAmount
-        );
+        // The contract owns these tokens, so use `transfer`, not `transferFrom`.
+        IERC20(underlyingToken).safeTransfer(recipient, swapAmount);
     }
 
     /// @notice Swap on curve using the supplied params
@@ -174,7 +202,7 @@ contract Extender is Ownable {
     ) internal returns (uint256 amountOut) {
         // Curve swap
         uint256 debtTokenBalance = IERC20(debtToken).balanceOf(address(this));
-        approve(debtToken, poolAddress);
+        _approve(debtToken, poolAddress, debtTokenBalance);
         return
             ICurveMetapool(poolAddress).exchange_underlying(
                 i,

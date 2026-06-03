@@ -24,14 +24,20 @@ describe("Extender", function () {
   // Fails
 
   it("Should fail when executing with more than balance", async function () {
-    expect(this.extender.executeOperation(100, 50)).to.be.revertedWith('Not enough balance');
+    await expect(
+      this.extender.executeOperation(100, 50, this.user1.address, 100)
+    ).to.be.revertedWith('Not enough balance');
   });
 
   it("Should fail when debt is more than collateral / 2", async function () {
     const collateral = 100;
     const targetDebt = (collateral / 2) + 1
 
-    expect(this.extender.connect(this.daiHolder).executeOperation(collateral, targetDebt)).to.be.revertedWith('Debt greater than collateral value / 2');
+    await expect(
+      this.extender
+        .connect(this.daiHolder)
+        .executeOperation(collateral, targetDebt, this.daiHolder.address, 100)
+    ).to.be.revertedWith('Debt greater than collateral value / 2');
   });
 
   // Set Parameters
@@ -43,7 +49,7 @@ describe("Extender", function () {
 
   it("Should fail when setting new yield Token not supported by alchemix", async function () {
     const newYieldToken = "0x28c6c06298d514db089934071355e5743bf21d60"
-    expect(this.extender.setYieldTokenAddress(newYieldToken)).to.be.revertedWith('Yield Token not supported by Alchemix');
+    await expect(this.extender.setYieldTokenAddress(newYieldToken)).to.be.revertedWith('Yield Token not supported by Alchemix');
   });
 
   it("Should set new curve pool", async function () {

@@ -1,14 +1,15 @@
 {
-  "name": "diego_drop",
+  "name": "alchemix-extender-contracts",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Hardhat contracts for the Alchemix Extender dApp",
+  "main": "hardhat.config.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "compile": "hardhat compile"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.3",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
